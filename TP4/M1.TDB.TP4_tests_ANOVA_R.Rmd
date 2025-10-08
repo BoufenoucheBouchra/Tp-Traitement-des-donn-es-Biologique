@@ -1,0 +1,204 @@
+---
+title: "Compte rendu TP4 - tests statistiques - ANOVA"
+author: "Boufenouche Bouchra groupe: BBS"
+date: "23/09/2024"
+output: 
+   html_document: 
+      toc: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+<div style="border: 2px solid #b350af; padding: 15px; margin: 20px 0; border-radius: 10px; background-color: #f9f9f9;">
+# <span style="color:#9B30FF">rappel :</span> 
+test de fisher pour comparer deux variances .
+
+H0 : les variances sont homogènes.
+
+Hypothèse alternative H1 : Au moins une des variances est différente.
+</div>
+
+# <span style="color:#ff00ff">Analyse de la variance (ANOVA)</span>
+
+## <span style="color:#ff00ff">ANOVA à 1 facteur (une variable qualitative)</span>
+```{r}
+resistance = read.table("resistance.txt",header=T,stringsAsFactors=T); head(resistance) ; tail(resistance)
+attach(resistance);names(resistance)
+table(lignee) #Affichage des effectifs des différents groupes (niveaux du facteur)
+#ou 
+summary(lignee) #mais cette fonction est plus globale
+tapply(score,lignee,mean)#Affichage du score moyen par groupe
+#ou pour avoir que ceux de A17:
+mean(score[lignee=="A17"])
+tapply(score,lignee,summary)
+#DZA45 a un score de résistance plus important que les autres
+#affichage de l'histogramme des scores, tous groupes confondus
+hist(score,breaks=15, ylab='effectifs',col="#ff00ff") # mais ce histogramme ne donne pas des informations sur les lignées 
+par(mfrow=c(2,2))
+hist(score[lignee=="A17"], ylab='effectifs',col="#dc9de8")
+hist(score[lignee=="DZA45"], ylab='effectifs',col="#dc9de8")
+hist(score[lignee=="HM008"], ylab='effectifs',col="#dc9de8")
+hist(score[lignee=="HM013"], ylab='effectifs',col="#dc9de8")
+par(mfrow=c(1,1))
+boxplot(score~lignee,col="#dc9de8",ylab="score",main="La distribution des scores pour chaque lignée")
+```
+#Tests préalables à l'ANOVA
+Avant de procéder à l'ANOVA, il faut vérifier la normalité des données de chaque groupe, et l'homogénéité des variances des groupes:
+#Test d'adéquation à la loi normale (H0 = "les données suivent la loi Normale") 
+```{r}
+#Test de Shapiro
+#H0: la distribution des données suit une loi normale
+#alpha =5% = 0.05
+shapiro.test(score[lignee=="HM008"])#p-value = 0.1003 : on ne rejette pas H0 donc la distribution de la variable HM008 suit une loi normale 
+shapiro.test(score[lignee=="A17"] )#p-value = 0.2038 : on ne rejette pas H0 donc la distribution de la variable A17 suit une loi normale 
+shapiro.test(score[lignee=="DZA45"])#p-value = 0.1003: on ne rejette pas H0 donc la distribution de la variable DZA45 suit une loi normale 
+shapiro.test(score[lignee=="HM013"])#p-value = 0.1003 on ne rejette pas H0 donc la distribution de la variable HM013 suit une loi normale 
+# ou plus simple
+tapply(score,lignee,shapiro.test)
+
+#conclusion : la distribution du score de chaque lignée est de type normale
+```
+#Test d'homogénéité des variances intra-groupes (H0 = "les variances sont égales")
+```{r}
+#Test de Bartlett de comparaison de plus de 2 variances :
+#H0 : les deux variances sont homogènes.
+bartlett.test(score~lignee)#p-value = 0.6988 : on ne rejette pas H0 car p-value>5% : donc il y'a une homogéniété des variances
+# ou 
+tapply(score,lignee,var) 
+#    A17     DZA45     HM008     HM013 
+# 5.377778 10.933333 10.933333 10.933333  # statistiquement on considère que les variances ne sont pas diffèrentes 
+
+#  les conditions d'applications sont vérifiées donc on peut faire le test d'ANOVA
+```
+#ANOVA à 1 facteur (le facteur est la variable "lignee") => H0 :"les moyennes des différents groupes sont égales" 
+```{r}
+res = aov(score~lignee)
+# l'écart moyenentre groupess :348.8 
+summary(res) # ou summary(aov(score~lignee))
+#ddl pour lignee= 4-1 ( 4: Nombre de catégories k de la variable lignée)
+#ddl pour résiduelles:40-4 (40: nombre total d'individus N)
+#Mean Sq pour lignne : (Sum Sq=348.8)/3=116.2667 | pour residuals =(sym sq (res)=343.6)/36 = 9.544444
+#F value  : 116.27/9.54=12.18763 : la variance inter-groupe est 12,18 fois plus forte que la variance intra-groupe
+#la probabilité d'avoir une valeur supérieure à F=12.18 sous la loi de fisher est 1.18e-05 (p-value)
+#avec cette p-value on rejette H0 donc les variances inter-groupe et intre-groupe sont différentes ( on rejette l'hypothèse d'égalité des moyennes entre groupes , donc il y' a au moins une moyenne qui différe des autres)
+#conclusion biologique : il y'a un effet du facteur lignéesur sur le score de la resistance 
+# H0 (biologiquement): le facteur lignée n'a pas d'effet sur le score de la résistance
+#test de fisher : H0 :les variances sont homogènes 
+
+model.tables(res) # la différence des moyennes de chaque groupe avec la moyenne générale
+# des ecarts des moyennes des groupes à la moyenne générale
+#  A17 DZA45 HM008 HM013 
+# -0.4   4.8  -3.2  -1.2  # écart négatif : la moyenne est inférieure à la moyenne générale
+
+#Si l'ANOVA détecte un effet significatif du facteur, on peut chercher les inégalités de moyennes : Tests de Student pour comparer les groupes 2 à 2
+t.test(score[lignee=="DZA45"],score[lignee=="HM013"],var.equal=T) #p-value = 0.0007389 donc on rejette H0 : donc il y'a une de différence de moyenne entre ces deux groupe
+t.test(score[lignee=="DZA45"],score[lignee=="HM008"],var.equal=T)#p-value = 3.856e-05 donc on rejette H0 donc il y'a une différence de moyenne entre ces deux groupe
+t.test(score[lignee=="DZA45"],score[lignee=="A17"],var.equal=T)#p-value = 0.0007161 donc on rejette H0 donc il y'a une  différence de moyenne entre ces deux groupe
+t.test(score[lignee=="A17"],score[lignee=="HM013"],var.equal=T)#p-value = 0.5389 donc on ne rejette pas H0 donc pas de différence de moyenne entre ces deux groupe
+t.test(score[lignee=="HM008"],score[lignee=="HM013"],var.equal=T)#p-value = 0.193 donc on ne rejette pas H0 donc pas de différence de moyenne entre ces deux groupe
+t.test(score[lignee=="A17"],score[lignee=="HM008"],var.equal=T)#p-value = 0.04174 #donc on rejette H0 : donc il y'a une de différence de moyenne entre ces deux groupe
+
+
+#pour limiter le taux de faux positifs lors de tests multiples, et pour faire toutes ces comparaisons avec une seule commande, on fait un test de comparaisons multiples de Student avec correction de la p-valeur 
+pairwise.t.test(score,lignee,p.adjust.method="bonferroni") # pour ajuster on multiplie la p-value* nombre de tests réalisés (5) donc on aura des p-value ajustés
+# conclusion : il y'a que la lignée DZA45 qui est significativement différente des autres
+
+# le test nécessite de charger la librairie laercio
+#library(laercio)
+#LDuncan(res,conf.level = 0.99)
+
+# Si version R > 4.2, utiliser la fonction duncan.test du package agricolae
+#install.packages("agricolae")
+#library(agricolae)
+#duncan.test(res,"lignee",alpha=0.01,console=T)
+#classer les groupes en groupes similaires a, b, etc.)
+#conclusion : on peut confirmer que il y'a que la lignée DZA45 qui est différente (a)des autres (b)
+
+```
+##si les échantillons ne suivent pas la normalité
+```{r}
+#une ANOVA non paramétrique avec le test de Kruskall-Wallis :
+
+#H0: il n'y'a pas d'eefet du facteur lignee sur le score de la resistance
+kruskal.test(score~lignee) #p-value = 0.0004092  on rejette H0 donc il y'a un effet du facteur lignee
+
+# tests non paramétrique de Wilcoxon/Mann-Whitney, pour comparer les groupes 2 à 2 :
+wilcox.test(score[lignee=="HM008"],score[lignee=="A17"])
+wilcox.test(score[lignee=="HM008"],score[lignee=="DZA45"])
+
+pairwise.wilcox.test(score,lignee,p.adjust.method="bonferroni")
+
+#les tests non paramétriques sont moins forts que les test paramétriques .
+```
+
+## <span style="color:#ff00ff">ANOVA à 2 facteurs (deux variables qualitatives)</span>
+```{r}
+#Exploration du jeu de données
+croissance = read.table("croissance.txt",header=T,stringsAsFactors=T) ; head(croissance)
+attach(croissance);names(croissance)
+# présentation graphique :
+layout( matrix( c(1,2,3,3) , nrow=2, ncol=2, byrow = FALSE)) # une autre façon pour diviser la fenetre/console | deux fois 3 dans le vecteur car on a un nombre impair des graphes
+boxplot(hauteur~engrais, main="engrais",ylab="hauteur (cm)",col="#dc9de8")#on observe pas une très grande différence
+boxplot(hauteur~temperature, main="temperature",ylab="hauteur (cm)",col="#dc9de8")# les boxplots ne se chauvauchent pas on observe que la coissance des plantes dans des températures moyennes est plus importante que celle des plantes dans des températures élevées
+boxplot(hauteur~temperature+engrais, main="engrais-temperature",ylab="hauteur (cm)",las=3,col="#dc9de8") # l'effet de température est plus important que l'effe des engrais 
+
+#Tests préalables à l'ANOVA Test d'adéquation à la loi normale (H0 = "les données suivent la loi Normale")
+
+#test shapiro
+# remarque: pour sélectionner les lignes correspondant à une combinaison de facteur colonnes, on utilise "&":
+shapiro.test(hauteur[engrais=="A" & temperature=="Medium"])
+shapiro.test(hauteur[engrais=="A" & temperature=="High"])
+shapiro.test(hauteur[engrais=="B" & temperature=="Medium"])
+shapiro.test(hauteur[engrais=="B" & temperature=="High"])
+# conclusion statistique : toutes les p-values sont supérieures à alpha=5% donc on ne rejette pas H0 ce qui explique que les distributions suivent une loi normale 
+
+#Test de Bartlett de comparaison de plus de 2 variances
+
+bartlett.test(hauteur~interaction(temperature,engrais))
+#p-value = 0.493 donc on ne rejette pas H0 donc il y'a une homogéniété des variances
+
+#les conditions d'application sont vérifies donc on peut faire ANOVA
+
+#Anova à 2 facteurs : 
+#H0 : "les moyennes des différents groupes sont égales"
+par(mfrow=c(1,1))
+#Modèle d'ANOVA où l'on teste l'effet de 2 facteurs ainsi que leur interaction
+model1<-aov(hauteur~temperature*engrais)	
+summary(model1) # il y'a un effet d'interaction 
+interaction.plot(temperature,engrais,hauteur, main="interaction plot")# lorsque les deux droites se croisent ça veut dire qu'il y'a une interaction
+#lorsque les températuressont élevées avec les engraix B que les plantes grandissent et inversement lorsq les températures sont moyennes c'est avec les engrais A que les plantes poussent.
+
+
+#Modèle d'ANOVA où l'on teste l'effet de 2 facteurs sans leur interaction
+model2<-aov(hauteur~temperature+engrais)	
+summary(model2)
+
+
+#Comparaison des 2 modèles avec une ANOVA sur les résidus des 2 modèles:
+#H0 : les deux modèles sont identiques 
+# on comapre les deux modèles car ils ont une base commune et une seule différence entre eux
+anova(model1,model2) # on compare les résidus des deux modèles 
+#s'il n'y a pas de différence (p-value > 0.05) on garde le modèle le plus simple.
+#s'il y a une différence significative (p-value < 0.05), on garde le modèle présentant le plus de termes significatifs.
+
+#résultat : p-value=0.02303 donc on rejette H0 les deux modèles ne sont pas identiques ,on prend le modèle présentant le plus de termes significatifs et donc le modèle 1 
+
+#l'effet de la température n'est pas intense avec les engrais B comme avec les engrais A donc on a pas un effet strict de la température 
+
+
+# plantes avec "engrais" différents
+t.test(hauteur[engrais=="A" & temperature=="High"],hauteur[engrais=="B" & temperature=="High"],var.equal=T)     # comparaison A/B pour température "High"
+t.test(hauteur[engrais=="A" & temperature=="Medium"],hauteur[engrais=="B" & temperature=="Medium"],var.equal=T) # comparaison A/B pour température "Medium"
+
+#selon les p-values : les deux ne sont pas différents
+
+# plantes avec "températures" différentes
+t.test(hauteur[engrais=="A" & temperature=="Medium"],hauteur[engrais=="A" & temperature=="High"],var.equal=T)   # comparaison High/Medium pour l'engrais A
+t.test(hauteur[engrais=="B" & temperature=="Medium"],hauteur[engrais=="B" & temperature=="High"],var.equal=T)   # comparaison High/Medium pour l'engrais B
+
+##selon les p-values : les deux sont différents
+
+#CONCLUSION : 
+#les résultats montrent que la température a un impact significatif sur la hauteur des plantes, quel que soit l'engrais utilisé.
+
+```
