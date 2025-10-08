@@ -9,7 +9,7 @@
 [TP2 HTML](TP2/M1.TDB.TP2_reglin_proba_ic_R.html)
 
 ## TP3 - Tests statistiques
-[TP3 HTML](TP3_Tests_Statistiques/TP3.html)
+[TP3 HTML](TP3/M1.TDB.TP3_tests_R.html)
 
 ## TP4 - ANOVA / Rice Expression Atlas
 [TP4 HTML](TP4_ANOVA_RiceExpressionAtlas/TP4.html)
