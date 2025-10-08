@@ -1,0 +1,166 @@
+---
+title: "M1 TDB TP Rice Expression Atlas"
+author: 'Boufenouche Bouchra groupe : BBS'
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    toc: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r set-options, echo=FALSE, cache=FALSE}
+options(width = 120)
+```
+
+
+# Environnement de travail, chargement et préparation des données
+
+
+Chargement de la librairie `tidyverse`.
+```{r import_libraries}
+library(tidyverse)
+```
+
+```{r}
+info <- read.delim("C:/Users/utilisateur/Desktop/TDB/TP/TP5/TP5_files/TP5_files/rice.atlas.info.tsv") #GSM : identifiant de l'hybridation 
+info
+summary(info)
+library(data.table)
+dm <- as.matrix(fread("C:/Users/utilisateur/Desktop/TDB/TP/TP5/TP5_files/TP5_files/rice.atlas.expr.normalized.tsv"), rownames=1)
+dm[1:10,1:5]
+summary(dm[1:10,1:5])
+hist(dm) #les valeurs sont faibles entre 0 et 10 
+hist(log2(dm))
+
+#Visualisation  des distributions des valeurs d'expression par hybridation : 
+boxplot(log2(t(dm)), las=3) #les boites à moustaches sont alignées au niveau du 3 eme quartile  grace à la normalisation vers 0 
+
+#visualiser le niveau d'expression d'un probeset en particulier, rRNA 18S, à travers les différentes conditions et réplicats
+
+plot(dm[,"AFFX.OS.18SrRNA_s_at"], col=info$color, pch=16, main="Expression (log2) du probeset AFFX.OS.18SrRNA_s_at dans les 98 microarrays réalisés", axes=F)
+axis(1, at=1:98,labels=rownames(dm), las=3)
+axis(2)
+```
+
+
+
+
+
+
+# Analyse en composantes principales 
+
+```{r}
+info$stage
+stages <- info$stage %in% c('R', 'S', 'YL', 'P1', 'P3')
+info_s <- info[stages,]
+
+df_s <- read.delim("C:/Users/utilisateur/Desktop/TDB/TP/TP5/TP5_files/TP5_files/rice.atlas.expr.normalized.sample.tsv", row.names=1)
+
+#ACP : les échantillons racines sont regroupés ensemble
+#comme on a deja normalisé on va faire une ACP non normée : 
+acp = prcomp(log2(df_s), scale.=F)  # n ind >> p var >> K
+names(acp)
+barplot(acp$sdev)
+barplot(acp$rotation)
+barplot(acp$center)
+barplot(acp$scale)
+barplot(acp$x)
+
+#la fonction summary permet d'avoir la variance portée par les axes
+summary(acp) # avec seulement 16 composantes principales on peut revenir sur les individus de départ car on a 100% de l'information 
+
+library(factoextra)
+fviz_screeplot(acp, addlabels=T)
+# on peut s'arreter apres la  4eme composante car ça présente presque la totalité des informations les autre composantes ne rajoutent pas un grand pourcentage 
+
+
+fviz_pca_ind(acp, col.ind=info_s$stage) #chaque groupe est bien séparé  , on peut bien distinguer les groupes  
+#les répétition se ressemblent  | 
+#on ne peut pas  distinguer les stades de développement car ils sont proches à cause de l'information perdue 
+#ou 
+plot(acp$x[,1],acp$x[,2],col=info_s$color)
+
+fviz_pca_ind(acp,axes = c(1,3), col.ind=info_s$stage) # avec la composante 1 et 3 il est plus compliquer de distinguer les groupes s et YL donc on a  plus d'information perdue  mais on peut séparer les autres stades de développement.
+#ou 
+plot(acp$x[,1],acp$x[,3],col=info_s$color)
+
+# le but ici est de pouvoir differencier les différents stades de développemnt et de regrouper les répétitions ensemble  
+#donc avec ces résultats on peut vérifier la normalisation et le filtrage faits avant cette étape 
+
+
+```
+
+
+
+
+# Analyse différentielle 
+
+```{r}
+
+```
+
+
+
+
+
+
+# Analyse de clustering 
+
+```{r}
+YL.dm <- read.table("C:/Users/utilisateur/Desktop/TDB/TP/TP5/TP5_files/TP5_files/YL.dm.tsv",header = TRUE, sep = "\t")
+deg.YL <- read.table("C:/Users/utilisateur/Desktop/TDB/TP/TP5/TP5_files/TP5_files/deg.YL.tsv",header = TRUE, sep = " ")
+
+library(made4)
+par(mfrow=c(2,2))
+#jaune : très exprimè  | bleu : moins exprimé
+#un clustering hiérarchique:
+heatplot(log2(YL.dm), cols.default = F, lowcol = 'blue', highcol='yellow', dualScale = F, scale='column', method='ward.D2', RowSideColors=info$color)# chez les jeunes feuilles  on a deux clusters : le premier en bleu est sous exprimé et le deuxième en jaune est sur exprimé | les répétitions ont tendances à se regrouper ensemble | cette méthode est plus cohérente car elle réalise des groupes plus séparés
+
+heatplot(log2(YL.dm), cols.default = F, lowcol = 'blue', highcol='yellow', dualScale = F, scale='column', method='centroid',RowSideColors=info$color)
+
+heatplot(log2(YL.dm), cols.default = F, lowcol = 'blue', highcol='yellow', dualScale = F, scale='column', method='average',RowSideColors=info$color)
+
+heatplot(log2(YL.dm), cols.default = F, lowcol = 'blue', highcol='yellow', dualScale = F, scale='column', method='complete',RowSideColors=info$color)
+# ici des clusters sont plus homogènes
+
+heatplot(log2(YL.dm), cols.default = F, lowcol = 'blue', highcol='yellow', dualScale = F, scale='column', method='single',RowSideColors=info$color)# le lien simple : les profiles proche en proche ( les amis de mes amis sont mes amiss **)> clusters en escalier
+#l'axe x = les gènes  | l'axe y à droite : les organes | l'axe y à gauche : les couleurs présentent les différents stades de développement | les clusters en haut 
+
+```
+
+
+
+
+
+
+
+# Caractérisation d'une liste de gènes 
+
+```{r}
+YL.up <- deg.YL[ deg.YL$logFC>0 , ] #deg.YL$logFC>0  concentrer sur les gènes sur-exprimés dans la condition YL
+YL.up
+write.table(YL.up, "deg.YL.up.tsv", sep="\t")
+
+
+
+#p-value très significative (3.074e-87) = 274/57381: la probabilité de tomber sur un gène de chloroplast parmi les 57381 gènes du riz 
+# population de départ = 57381 gènes  
+# la  query : 2240 gènes 
+# il trouve 144 significative avec la loi binomiale et seuil : 0.05 
+# chloroplast : 274 du gènes dans le génomes qui sont annoté chloroplastes 
+# le test statistique va vérifier s'il y'a une intersection entre la querry et le chloroplaste
+
+#avec le chi2 d'indépendance on peut pour vérifier le lien entre la query et chloroplaste ( si les deux variables qualitatives sont indépendantes ou pas)
+
+
+#219 termes qui sortent d'une manière significative .
+```
+
