@@ -1,0 +1,150 @@
+---
+title: "Compte rendu TP3 - tests statistiques"
+author: "Boufenouche Bouchra BBS"
+date: "16/09/2024"
+output: 
+   html_document: 
+      toc: TRUE
+editor_options: 
+  chunk_output_type: console
+---
+
+# <span style="color:#2E8B57">Tests de Chi2</span>
+
+
+## <span style="color:#FF6347">Tests de Chi2 de conformité</span>
+Le test de Chi2 de conformité s'effectue sur les effectifs des différentes classes d'une variable qualitative (ou quantitative).
+
+```{r}
+freq_exp = c(0.25,0.5,0.25) # mettre sous forme de fréquences relatives ( fréquence attendue)
+freq_obs = c(22,53,25) 
+# la question posée est : les proportions observées sont-elles conformes aux proportions mendéliennes? ou (est ce que il y'a une conformité  entre les effectifs observés et les effectifs théorique)
+chisq.test(freq_obs, p=freq_exp) #chisq.test() : vecteur numérique | p:vecteur de probabilité
+#résultat : X-squared = 0.54 est le khi-deux  X²= somme(((effectif observé-effectif théorique)²)/effectif theorique) , si la conformité est respecté X² doit etre égale à 0  | p-value = 0.7634 par hasard , il y'a 76% de chance d'observer une valeur plus forte que 0.54 sous H0 > donc notre valeur n'est pas différente de 0 statistiquement , on ne peut pas rejetter  H0 car on a 76% de chance de rejetter H0 alors qu'elle est vraie | si p-value est inférieure à alpha donc on rejette H0 sinon on ne rejette pas H0 ( alpha=0.05)
+# 3 catégories car 3 génotypes donc df = 3-1=2: il y'a un effectif qui peut etre déduit si on connait les deux autres 
+#H0: les données observées du croisement sont conformes |H1 : les données observées du croisement ne sont pas conformes
+#conclusion : les données observées du croisement sont conformes
+```
+
+## <span style="color:#4682B4">Tests de Chi2 d'indépendance</span>
+Le test de Chi2 d'indépendance s'effectue sur les effectifs des différentes classes des 2 variables qualitatives.il faut au moins deux catégories pour la variabilité
+```{r}
+mat = matrix( c( 15,5,3,0,19,16) , nrow=2 , byrow=T , dimnames=list( c("R","S"), c("Col","Ws","Can") ) ) # créer une matrice
+mat
+chisq.test(mat, correct=F)#X-squared = 30.901 : khi-deux fort |p-value = 1.949e-07 < alpha  donc on rejette H0 donc il n y'a pas une indépendance 
+
+#H0: il y'a une indépendance entre la réponse des fleurs et l'écotype ou la résistance ou sensibilité à un pathogène est indépendante de l'écotype d'Arabidopsis thaliana 
+
+obs=chisq.test(mat, correct =F)$observed
+exp=chisq.test(mat, correct =F)$expected
+round(chisq.test(mat, correct =F)$expected)
+obs-exp #la différence entre deux tableaux pour observer les cases différentes 
+round(obs-exp)
+#ce qu'on observe lorsque on a une indépendance : chisq.test(mat, correct =F)$expected
+#conclusion : les plantes col sont significativement plus résistantes  que les autres plantes de WS et can & les plantes de WS et can sont significativement plus sensibles
+```
+#Les données (petits calculs et graphiques)
+```{r}
+
+Col_0=c(4.30,4.25,3.50,3.35,4.30,3.75,3.55,4.10,3.95,4.55,4.25,3.75,3.85,4.15,3.55,4.75,3.95,3.65)
+Mut_X1=c(3.06,4.05,3.95,3.40,3.80,3.95,3.65,4,3.85,3.95,3.65,3.75,3.4)# Vecteurs des tailles des plantes
+
+length(Col_0)
+length(Mut_X1)
+# Valeurs moyennes
+mean(Col_0) #3.972 cm pour les plantes sauvages 
+mean(Mut_X1) #3.727 cm pour les plantes mutées
+summary(Col_0)
+summary(Mut_X1)
+hist(Col_0,col="yellow")
+hist(Mut_X1,add=TRUE,col="orange") # add=TRUE pour ajouter le deuxième histogramme sur le premier histogramme
+# Représentation graphique des données
+boxplot(Col_0,Mut_X1,names=c("Col_0","Mut_X1"),col=c("white","darkgreen"),ylab="taille (cm)")
+abline(h=mean(Col_0),col="black",lty=3,lwd=2)
+abline(h=mean(Mut_X1),col="green",lty=3,lwd=2)
+legend("topright", legend = c("Mut_X1","Col_0" ), text.col = c("darkgreen","black"),lty=c(2,1))
+#remarque : les boxplots ne donnent pas les valeurs moyennes
+#conclusion : la dispersion des données semble plus faibles pour les mutantes par rapport aux plantes sauvages | grace à ce graphe on peut observer une différence au niveau de la moyenne entre les deux phénotypes : les plantes sauvages et les plantes mutantes 
+```
+
+# <span style="color:#FFD700">Test d'adéquation à la loi normale (H0 = "les données suivent la loi Normale")</span>
+```{r}
+#Test de Shapiro (lorsque la distribution suit une loi normale) : il est puissant avec les échantillons de petites tailles
+#H0: la distribution suit une loi normale
+shapiro.test(Col_0) #p-value = 0.7996>alpha : on  ne rejette pas H0 : la distrubition de la taille des plantes sauvages suit une loi normale
+shapiro.test(Mut_X1)#p-value = 0.09525>alpha : on rejette pas H0 : la distrubition de la taille des plantes mutés suit une loi normale
+```
+
+
+#<span style="color:#FFD700">Test d'homogénéité des variances (H0 = "les variances sont égales")</span>
+
+```{r}
+#Test de Fisher : comparer les variaancess 
+var(Col_0)
+var(Mut_X1)
+sd(Col_0)
+sd(Mut_X1)
+var.test(Col_0,Mut_X1)# la variance de col est 1.7592 fois plus supérieure à celle de Mut 
+#on a une chance de 32% d'observer une valeur  supérieure à 1.76 ( p-value =0.32) | p-value=0.32>alpha=0.05 donc on rejette pas l'hypothèse d'égalité de variances
+#df : degrée de liberté : k(n'-1;n"-1) : num df=n' : la taille de l'échantillon du premier groupe  , denom df=n" : la taille de l'échantillon du deuxième groupe
+# le ratio de variances : 1.759191
+#on peut considérer que les variances des deux groupes sont homogènes 
+```
+
+
+#<span style="color:#FFD700">Test d'homogénéité (de comparaison) des moyennes (H0 = "les moyennes sont égales")</span>
+```{r}
+##Test de Student bilatéral (H1 : "il y a une différence de moyenne entre Col_0 et Mut_X1")
+
+# dans la commande t.test on peut spécifier si les variances des échantillons sont égales (var.equal=T) ou non(var.equal=F)
+# l'hypothèse alternative est "two.sided" par défaut
+t.test(Col_0,Mut_X1,var.equal = T)
+# si les variances ne sont pas égaux on ne peut pas utiliser le test de student ( taille d'échantillon <30)
+#df=n-2  |p-value = 0.0651>alpha : on ne rejette pas H0 alors les moyennes sont égales 
+
+
+##Test de Student unilatéral (H1 = "la moyenne de Col_0 > (ou <) à la moyenne de Mut_X1")
+
+# dans la commande t.test, on va spécifier l'hypothèse alternative: alternative = "greater" ou "less". Quel terme allez-vous mettre?
+t.test(Col_0,Mut_X1,var.equal = T, alternative = "greater") # p-value = 0.03255<alpha : on rejette H0 : donc on accepte H1 et donc la moyenne de Col_0 est significativement > à la moyenne de Mut_X1
+#conclusion : il y'a pas une grande différence entre les deux 
+# si on considère qu'il y'a une petite différence entre les deux , biologiquement on peut conclure que le géne muté participe à la croissance  , ce gène a un effet positif sur la croissance des plantes
+```
+
+
+#<span style="color:#FFD700">Tests paramétriques d'adéquation et tests d'homogénéité (sur une variable quantitative)</span>
+```{r}
+# les données 
+non_infected=c(0.021,0.15,0.023,0.03,0.022,0.05,0.035,0.1,0.03)
+infected=c(1.22,1.12,1.06,1.04,0.86,1.24,1.96,0.9,2.5)
+summary(non_infected)
+summary(infected)
+hist(non_infected,col="green")
+hist(infected,add=TRUE,col="yellow")
+boxplot(non_infected,infected)
+mean(non_infected)
+mean(infected)
+```
+#<span style="color:#FFD700">Test d'adéquation à la loi normale</span>
+```{r}
+# Test de Shapiro
+shapiro.test(infected)# on rejette l'hypthèse de normalité car p-value <alpha : on rejette H0
+shapiro.test(non_infected) # on rejette l'hypthèse de normalité car p-value <alpha : on rejette H0
+#conclusion : les distributions ne suivent pas une loi normale
+```
+
+
+# <span style="color:#FF4500">Test non paramétriques d'homogénéité (sur une variable quantitative)</span>
+```{r}
+# Test de Mann & Whitney (équivalent non paramétrique du test de Student)
+wilcox.test(infected,jitter(non_infected))  # bilatéral | p-value = 0.0004095 < alpha : on rejette H0  donc les valeurs sont différentes entre les plantes infectées et non infectées |
+# remarque jitter(): pour rajouter du bruit à une série de valeurs
+wilcox.test(infected,non_infected,alternative="greater")  # unilatéral | p-value = 0.0002047<alpha : on rejette H0 donc  l'expression d'un gène de défense chez la plante en condition d'infection par un microorganisme pathogène foliaire est  grande /plus importante que celle  des plantes non infectées.
+
+
+```
+
+<div style="border: 2px solid #4CAF50; padding: 15px; margin: 20px 0; border-radius: 10px; background-color: #f9f9f9;">
+# <span style="color:#9B30FF">Conclusion</span>
+l'expression d'un gène de défense chez la plante en condition d'infection par un microorganisme pathogène foliaire est plus importante que celle  des plantes non infectées.
+</div>
