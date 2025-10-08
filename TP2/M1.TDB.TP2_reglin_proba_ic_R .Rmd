@@ -1,0 +1,213 @@
+---
+title: "Compte rendu TP2 - Régression linéaire, probabilités, intervalle de confiance"
+author: 'Boufenouche Bouchra groupe : BBS'
+date: "09/09/2024"
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+---
+
+on a deux variables :-la taille du génome et ORF number
+
+
+# <span style="color:#2E8B57"> Régression linéaire </span>
+
+les questions qu'on peut se poser : 
+- Est ce que il y'a une corrélation ou lien entre la taille du génome et le nombre des ORF
+```{r}
+genomes=read.table("Bacterial_genomes.txt",sep="\t",header = TRUE)
+attach(genomes)
+names(genomes)
+Genome_size # pour afficher le contenu de la colonne genome_size | unité  de mesure pour génome_size > KB ( kilos bases)
+ORF_number # pour afficher le contenu de la colonne ORF_number 
+
+# visualisation des données : 
+plot(Genome_size,ORF_number,pch=16) # nuage de points | pour afficher le graphe à l'intérieur il faut aller sur la roue à coté de knit et choisir chunk output in console 
+# la variable y : ORF_number est expliquée par la variable x: le génome_size
+# chaque point est une espèce de  bactérie pour laquelle on a mesuré la taille du génome et le nombre de gènes 
+#il y'a une corrélation positive 
+# pour Quantifier la relation entre ces 2 variables: covariance
+
+cov(Genome_size,ORF_number) # l'ordre n'a pas d'importance | la covariance est entre + l'infini et - l'infini  | pour chaque bactérie on va comparer sa taille de génome avec la taille  moyenne de génome  | plus la covariance est forte plus le x est fort et le y correspond est fort et inversement |
+
+#coefficient de corrélation r de Pearson ( la covariance / le produit des écart-types de chaque variable) r et entre -1 et 1 :
+
+cor(Genome_size,ORF_number) # coeff de corrélation positif proche de 1 , une corrélation positive de 95%
+
+#une fonction linéaire qui relie les 2 variables, avec la commande lm() :
+
+lm(ORF_number ~ Genome_size) # remarque: c'est une régression de "y" sur "x", d'où lm(y~x) | l'orde est important dans ce cas là , y la variable qu'on souhaite expliquer en fonction de la variable x | cette régression donne des coefficients | la formule générale : y=ax+b : a et b sont inconnus  | l'intercept est l'ordonnée à l'origine donc b = 503.2911 , et  0.8272 est a | ORF_number=0.8272*génome_size + 503.2911 | si la corrélation est à 100% on aura des points alignés sur la droite .
+reglin=lm(ORF_number ~ Genome_size) # pour sauvegarder le résultat dans une variable
+#la significativité des coefficients de la droite
+summary(reglin) # la p-value : 4.21e-05 *** est tres faible donc on rejette H0 > les valeurs sont significativement différents de 0 
+
+# le coefficient de détermination R2 (% de variance expliquée par le modèle linéaire ==> bien si > 70%):
+
+cor(Genome_size,ORF_number)^2 #(stocké aussi dans summary(reglin)) | au dessu de 70% donc c'est super > le modéle est correctement ajusté sinon acceptable  | ce modèle explique 91% des données de ce tableau .
+
+#le nuage de points avec la droite de régression:
+
+plot(Genome_size,ORF_number,pch=16)			
+abline(reglin,col="red",lwd=2) # pour tracer la droite en fonction d'un coefficient donnée
+
+```
+
+# <span style="color:#2E8B57"> Calculs de probabilité </span>
+```{r}
+sequoia=read.table("Sequoia.txt",sep="\t",header = TRUE)
+attach(sequoia)#attach pour accéder directement aux noms des colonnes
+names(sequoia)
+hist(taille_arbre)
+length(taille_arbre[taille_arbre==80])/length(taille_arbre) #la probabilité qu'un arbre mesure 80m  = la fréquence d'un arbre qui mesure 80m 
+# ou 
+length( which(taille_arbre==80) ) / length(taille_arbre)
+# la probabilité qu'un arbre mesure plus de 100 : 
+length( which(taille_arbre>100) ) / length(taille_arbre) # which(taille_arbre>100) donne les positions des valeures > à 100
+
+```
+#Calculs basés sur des lois (ou distributions) de probabilité : 
+    dnorm() : fonction densité (density)
+    pnorm() : fonction de répartition (probability)
+    qnorm() : fonction quantile (quantile)
+    rnorm() : générateur aléatoire (random) : génére des valeurs de la variables qui suivent une loi normale 
+    
+    
+#Calculs basés sur une loi normale centrée réduite N(0,1)    
+```{r}
+dnorm(0,0,1) # P(X = 0) |dnorm(x=0, mean = 0, sd = 1): x les valeurs pour laquelles on veut les probabilités
+dnorm(c(-0.5,0.5),0,1) #on calcul la proba pour deux valeurs donc il fau c() = le résultat est = 0.3520653>  la meme proba car c'est symétrique
+
+pnorm(0,0,1) # on a 0.5 cae il a prit la moitié gauche sous l'air de la courbe | P(X<=0) 
+1-pnorm(0,0,1) # ou pnorm(0,0,1, lower.tail=F) >P(X > 0)
+pnorm(0,0,1)
+
+#qnorm() fonction qui permet de calculer un quantile : il calcule le quantile à une valeur , on lui donne une position comme exp la médiane et lui va donner la valeur de la médiane
+qnorm(0.5,0,1)
+qnorm(0.75,0,1)
+
+
+#rnorm() génére aléatoirement 100 valeurs d'une variable en suivant une loi normale 
+hist(rnorm(100000,0,1))  #Histogramme pour 100 valeurs échantillonnées aléatoirement suivant une N(0,1)
+```
+#Application à la forêt de séquoias : 
+```{r}
+
+summary(sequoia)
+mean(taille_arbre)#moyenne
+sd(taille_arbre) #écart-type de la taille des arbres 
+dnorm(80,mean(taille_arbre),sd(taille_arbre))
+#la probabilité qu'un séquoia mesure plus de 110m
+1-pnorm(100,mean(taille_arbre),sd(taille_arbre))
+#ou : 
+pnorm(100,mean(taille_arbre),sd(taille_arbre), lower.tail=F) 
+# on retombe sur les memes chiffres  donc on confirme que les données suivent une loi normale 
+# pour les arbre de 80 m on a une estimation presque pareille à partir de la loi de probabilité et les données
+# pour les arbres de 100 m on a une petite différente due à la taille de l'échantillon 
+```
+
+#Calculs basés sur une loi Binomiale B(n,p)
+```{r}
+#Exemple: pour un lot de n=100 graines d'Arabidopsis ayant chacune une probabilité de germination p=0.8 donc selon 
+#B(100,0.8)
+
+#La probabilité que k=80 graines germent (k=nombre de succès)
+dbinom(80,100,prob=0.8)#x le nb de succés pour le quel on veut faire le calcul , size : nb d'essais  , p =proba > 10% de chance que 80 de graines qui  de germent
+
+#La probabilité que au maximum 80 graines germent
+pbinom(80,100,prob=0.8) # entre 0 et 80 qui germent = 54%de chance
+
+#La probabilité que plus de 80 graines germent
+pbinom(80,100,prob=0.8, lower.tail=F)# 46% de chance que plus de 80 graines germent
+
+#En moyenne, combien de graines devraient germer ?
+#le produit n*p = 100*0.8 : 80
+#La distribution Binomiale B(100,0.8):
+k=seq(0,100,1)    # k=nombre de graines qui germent
+plot(dbinom(k,100,prob=0.8),xlab="k",ylab="Prob(X=k)")# vision globale de la loi binomiale : la valeur la plus probable est 80  mais la zone la plus probable et entre (80-10%,80+10%)
+median(dbinom(k,100,prob=0.8))
+mean(dbinom(k,100,prob=0.8))
+```
+
+
+
+
+# <span style="color:#00CD00"> Estimer un intervalle de confiance (IC) d'un paramètre populationnel (µ, p,...) à partir d'un échantillon </span>
+
+#Intervalle de confiance de la moyenne théorique µ de la population, à partir de la moyenne m calculée sur un échantillon
+```{r}
+tomates=read.table("Tomates_cerises.txt",sep="\t",header = TRUE)
+attach(tomates)
+names(tomates)
+poids_tomate
+m = mean(poids_tomate)  # moyenne calculée sur l'échantillon
+s = sd(poids_tomate)    # écart-type calculé sur l'échantillon
+n = length(poids_tomate)# taille de l'échantillon
+#Si n≤100, on utilise la distribution de Student pour calculer la marge d'erreur. 
+
+error <- qt(0.975,df=n-1)*s/sqrt(n) # qt(0.975) = quantile 97,5% de la distribution de Student ; s/sqrt(n) = erreur standard de la moyenne  | qt() permet de calculer le quantile de la loi student , 0.975 car 95% sous la courbe fait que on a 2.5% de chaqque coté ( a cause de l'asymitrie)0.95+0.025=0.975
+left  <- m-error
+right <- m+error
+#L'intervalle ayant 95% de chance de contenir la vraie moyenne µ de la population est:
+
+left;right
+
+#Si n>100 on utilise la distribution normale pour calculer l'erreur.
+
+error <- qnorm(0.975)*s/sqrt(n) # qnorm(0.975) = quantile 97,5% de la distribution normale
+left  <- m-error
+right <- m+error
+
+#L'intervalle ayant 95% de chance de contenir la vraie moyenne µ de la population est alors:
+
+left;right
+# le poids moyen théorique d'une récolte de tomates cerises est entre 11 et 12
+
+#exemple : 
+  error <- qnorm(0.995)*s/sqrt(101) # qnorm(0.975) = quantile 97,5% de la distribution normale
+left  <- m-error
+right <- m+error
+left;right
+error <- qt(0.995,df=n-1)*s/sqrt(n)
+left  <- m-error
+right <- m+error
+left;right
+```
+
+#IC de la proportion théorique p d'un caractère dans la population, à partir de la fréquence f calculée sur un échantillon : 
+```{r}
+f <- 0.4	# fréquence de pommes rouges dans l'échantillon
+n <- 125	# taille de l'échantillon
+error <- qnorm(0.975)*sqrt(f*(1-f)/n) # 0.085 d'erreur 
+left  <- f-error
+right <- f+error
+
+#L'intervalle ayant 95% de chance de contenir la vraie proportion p de la population est:
+
+left;right
+#exp1-------------------
+f <- 0.4	# fréquence de pommes rouges dans l'échantillon
+n <- 500	# taille de l'échantillon
+error <- qnorm(0.995)*sqrt(f*(1-f)/n)
+left  <- f-error
+right <- f+error
+
+left;right
+
+#-exp2 : --------------
+f <- 0.4	# fréquence de pommes rouges dans l'échantillon
+n <- 125	# taille de l'échantillon
+error <- qnorm(0.995)*sqrt(f*(1-f)/n)
+left  <- f-error
+right <- f+error
+
+left;right # lorsque on augmente la confiance l'intervalle devient plus grand et donc moins précis  pour avoir un intervalle plus précis il faut augmenter le nombre d'échantillon 
+
+# intervalle petit  > donc n grand > plus de précision 
+```
+
+
+
