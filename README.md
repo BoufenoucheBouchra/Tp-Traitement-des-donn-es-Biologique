@@ -11,5 +11,8 @@
 ## TP3 - Tests statistiques
 [TP3 HTML](TP3/M1.TDB.TP3_tests_R.html)
 
-## TP4 - ANOVA / Rice Expression Atlas
-[TP4 HTML](TP4_ANOVA_RiceExpressionAtlas/TP4.html)
+## TP4 - ANOVA 
+[TP4 HTML](TP4/M1.TDB.TP4_tests_ANOVA_R.html)
+
+## TP5 - Rice Expression Atlas
+[TP5 HTML](TP4/M1.TDB.TP4_tests_ANOVA_R.html)
