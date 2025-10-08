@@ -15,4 +15,4 @@
 [TP4 HTML](TP4/M1.TDB.TP4_tests_ANOVA_R.html)
 
 ## TP5 - Rice Expression Atlas
-[TP5 HTML](TP4/M1.TDB.TP4_tests_ANOVA_R.html)
+[TP5 HTML](TP5/M1.TDB.TP5_Rice_Expression_Atlas.html)
