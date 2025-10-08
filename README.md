@@ -3,7 +3,7 @@
 # Comptes rendus TDB M1 - Bioinformatique et Biologie des Systèmes
 
 ## TP1 - Initiation à R
-[TP1 HTML](TP1_Initiation_R/TP1.html)
+[TP1 HTML](TP1/M1.TDB.TP_introduction_R.html)
 
 ## TP2 - Régression linéaire, probabilités, intervalle de confiance
 [TP2 HTML](TP2_RegLin_Prob_Intervalle/TP2.html)
