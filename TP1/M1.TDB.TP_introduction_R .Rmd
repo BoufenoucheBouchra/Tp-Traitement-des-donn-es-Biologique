@@ -1,0 +1,170 @@
+---
+title: "Compte rendu TP1 - Initiation à R"
+author: "Boufenouche Bouchra groupe BBS"
+date: "Le 2 Septembre2024"
+output: 
+   html_document: 
+      toc: TRUE
+---
+
+# <span style="color:#2E8B57"> Premiers pas avec R et RMarkdown </span>
+
+
+
+Ceci est un document de type R Markdown. Markdown est une mise en forme syntaxique simplifiée pour rédiger des documents HTML, PDF ou encore MsWord. Pour plus de détails sur l'utilisation de R Markdown cf. <http://rmarkdown.rstudio.com>.
+
+Le fichier doit avoir une extension ".Rmd". Quand vous cliquez sur le bouton **Knit**, le document sera généré et inclura le contenu ainsi que la sortie produite par le code R intégré dans le document. Le code R peut être intégré comme ceci :
+
+
+Il existe beaucoup de documents et tutoriels en ligne que vous pouvez explorer par vous-même. Exemples :
+
+- Mise en forme du texte : https://rmarkdown.rstudio.com/lesson-8.html
+- Bouts de code R (chunks) : https://rmarkdown.rstudio.com/lesson-3.html
+
+
+# <span style="color:#2E8B57"> Utilisation et calcul avec du code R </span>
+
+Cette partie est à compléter avec le sujet de TP en ligne : <http://silico.biotoul.fr/site/index.php/M1_Traitement_de_Donnees_Biologiques_-_TP_Intro_R>
+
+## <span style="color:#00CD00"> Utilisation de variables  </span>
+
+Les variables (ou objets) permettent de stocker des données qui peuvent être :
+
+* une valeur simple de type numérique (`numeric`), logique (`logical`), chaîne de caractères (`character`) ou qualitative (`factor`).
+* une liste (appelée `vector`).
+* un tableau à 2 dimensions, les colonnes pouvant avoir des types différents (`data.frame`). Ce sont les plus utilisés en statistiques.
+* un tableau à 2 dimensions, toutes les cases ayant le même type (`matrix`).
+* un tableau à plus de 2 dimension (`array`).
+* une combinaison des précédents (`list`). 
+
+Une variable a un nom (défini par l'utilisateur) qui permet d'accéder à son contenu.
+
+**Créer une variable appelée x qui stocke le résultat du calcul précédent 1 + 2 + 3.** L'affectation d'une valeur à une variable se fait avec <- ou le signe = comme suit dans la console : 
+
+```{r}
+x = 1 + 2 + 3 ;x #le ";x" permet d'afficher le contenu de la variable x
+#Autres types de variables simples: 
+texte = "Phrase qu'il faut mettre entre guillemets."
+logique = TRUE
+faux = FALSE
+
+x = x * 2 # on multiplie x de toute à l'heure par 2
+y = x**2  # y prend la valeur de x au carré (puissance 2)
+
+#Les valeurs logiques peuvent être le résultats de tests :
+x < 10  # strictement inférieur à 10 ?
+x <= 11 # inférieur ou égal
+x == 12 # test d'égalité
+x >= 13
+x > 0
+x != 0 # test si x est différent de 0
+```
+
+## <span style="color:#00EE00"> Vecteurs </span>
+ 
+
+```{r}
+x = c(2,3,5,8,4,6);x #Création d'un vecteur x
+length(x) #la fonction length() permet de calculer la longueur du vecteur x
+x[2] #Pour aficherla deuxième valeur de x , les crochets pour accéder à certains éléments
+
+x[ c(2,4,1) ]#Pour accéder à plusieurs éléments, on utilise un vecteur contenant les positions
+
+x[2:4] #Si les positions se suivent , donc avec cette ligne de commande on va afficher les éléments de la position 2 ,3 et 4
+
+x[4:2] #ou dans l'ordre inverse
+
+x[ -2 ] # tous, sauf le 2ème
+x[ -2:-3 ] # tous, sauf le 2ème et le 3ème
+# on peut également utiliser la fonction setdiff() pour exclure un ou plusieurs éléments ou avec Which par exemple x[-which(x==3)] (3 est l'index de l'élément à exclure)
+x>4 # teste chaque élément de X s'il est sup ou inf à 4
+which( x>4 ) # récuperer les éléments dont les index sont sup à 4
+x[ x>4 ] # les valeurs qui sont supérieur à 4
+x
+1 / x # l'inverse de tous les éléments de X
+# en arrondissant 2 chiffres après la virgule)
+round(1/x, 2)
+x + 1 # élément par élément
+x * 2 #élément par élément
+
+```
+
+## <span style ="color:#00FF00"> Fonctions </span>
+
+
+```{r}
+    summary(x) #Cette fonction fournit un résumé statistique: La valeur minimale | Le premier quartile (25%)  | La médiane (50%) | La moyenne | Le troisième quartile (75%)  | La valeur maximale
+    min(x) #Cette fonction renvoie la valeur minimale.
+    max(x) #Cette fonction renvoie la valeur maximale
+    median(x) #Cette fonction renvoie la médiane, d'un vecteur ou liste ou autre structures de données sur R , qui est la valeur qui sépare le vecteur en deux parties égales.
+    mean(x) #Cette fonction calcule la moyenne (moyenne arithmétique) des éléments d'une structure de données.
+    var(x) #Cette fonction calcule la variance ,qui mesure la dispersion des valeurs.
+    sd(x) #Cette fonction calcule l'écart-type, qui est la racine carrée de la variance et donne une idée de la dispersion des valeurs par rapport à la moyenne.
+
+ help(median)   
+ #La fonction help() en R est utilisée pour accéder à la documentation des fonctions, des objets et des packages. 
+ # on peut utiliser également ?mean ou Quand on ne connaît pas exactement le nom, on peut faire une recherche par mot :??mean
+```
+
+## <span style="color:#76EE00"> Lecture et écriture de fichiers contenant des données </span>
+
+```{r}
+
+read.table("Croissance_plantes.txt",sep="\t",header=TRUE)
+croissance = read.table("Croissance_plantes.txt", sep="\t", header=TRUE, stringsAsFactors=T) #data frame
+summary(croissance)
+dim(croissance) #La fonction dim() etourne les dimensions du data frame
+croissance
+croissance[1 ,  ] # ligne 1
+croissance[  , 1] # colonne 1
+croissance[1, 1] # première case
+croissance$poids # colonne qui s'appelle poids (la première)
+croissance[ , 'poids'] # encore une autre manière d'y accéder ou croissance[["poids"]]
+names(croissance) # Pour obtenir le nom des colonnes
+colnames(croissance)
+rownames(croissance)# dans le cas ou les lignes ont des noms ou identifiants 
+attach(croissance)
+poids
+origine_geo == 'pyr'    # test pour obtenir VRAI/FAUX
+which(origine_geo == 'pyr') # test pour obtenir les numéros des lignes
+# et ensuite
+croissance[ origine_geo == 'pyr' , 1:2 ] #origine_geo : catégories ,la 3eme colonne n'est plus une variable dans ce cas la donc elle sert à rien 
+# ou bien
+croissance[ which(origine_geo == 'pyr') , 1:2 ]
+# pour stocker le résultats dans une autre variable
+pyr = croissance[ origine_geo == 'pyr' , 1:2 ] #création d'un nouveau data frame
+write.table(pyr, "croissance_plantes_pyr.txt", quote=F, col.names=T, row.names=F, sep="\t")
+```
+
+## <span style="color:#7FFF00"> Fonctions graphiques </span>
+
+```{r}
+
+origine_geo = as.factor(origine_geo)
+summary(origine_geo)     # les effectifs
+pie(summary(origine_geo))   # le camembert
+pie (summary(origine_geo), main="origine géographique des plantes",col=rainbow(12)) # avec un titre
+#spectre de couleur : rainbow
+
+#Un histogramme (variable quantitative):
+hist(taille, xlim=c(40,90), xlab="taille (cm)", ylab="effectif", freq=T, main="histogramme de la taille des plantes", col="Magenta")
+# xlim=c(40,90) : pour visualiser les variables entre 40 et 90 
+#Une boite à moustaches (variable quantitative):
+boxplot(taille, main="boxplot de la taille des plantes", ylab="taille",col="Deep Pink") # la taille moyenne des plantes est entre 65 et 70 selon le boxplot
+#Plusieurs boites à moustaches (une variable quantitative en fonction des modalités d'une variable qualitative):
+plot(origine_geo, taille, las=3, main="boxplot de la taille des plantes en fonction de l'origine géographique",col="Maroon")#L'analyse des boîtes à moustaches montre une hétérogénéité significative dans les tailles des plantes selon leurs origines.
+stripchart(taille~origine_geo,las=1) # chaque carré représente un individu .
+#Un graphique à 2 dimensions ou nuage de points ( 2 variables quantitatives mesurées sur les mêmes individus) :
+plot( taille, poids,col="Magenta",pch=16) # Nous observons une corrélation positive entre le poids et la taille des plantes. Cela signifie que, généralement,quand la taille des plantes augmente, leur poids tend également à augmenter. 
+
+#Affichage de plusieurs graphiques dans la même fenêtre :
+par(mfrow=c(2,2))  # 2 en lignes et 2 en colonnes
+hist(taille,xlim=c(40,90),xlab="taille (cm)",ylab="effectif",freq=T,main="histogramme de la taille des plantes",col="Magenta")
+boxplot(taille,main="boxplot de la taille des plantes",ylab="taille",col="Magenta")
+plot(taille~origine_geo,las=3,col ="Magenta")
+stripchart(taille~origine_geo,las=1,col="pink")
+# Conclusion :Ces présentations graphiques montrent  une relation positive entre le poids et la taille des plantes, tout en mettant en évidence une variabilité considérable selon les origines.
+#x11(): pour affficher plusieurs graphiques 
+
+```
+
